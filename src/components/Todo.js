@@ -7,9 +7,13 @@ const Todo = () => {
   const [list, setList] = useState([]);
   const { register, handleSubmit, reset, setValue } = useForm();
   //to store edit data or items index
-  const [editItem, setEditItem] = useState();
+  const [editItem, setEditItem] = useState(0);
+  //For edit data to store and for saveHandler
+  //data edit hudaixa hai vanna lai garya ho
+  const [isEditing, setIsEditing] = useState(false)
   const onSubmit = (data) => {
-    let currentList = [...list, data];
+      let finalData = {...data, isCompleted:false}
+    let currentList = [...list, finalData];
     setList(currentList);
     reset();
   };
@@ -25,8 +29,9 @@ const Todo = () => {
     let currentList = [...list];
     let toEdit = currentList[index];
     setValue("text", toEdit.text);
-    console.log(list);
+    // console.log(list);
     setEditItem(index);
+    setIsEditing(true)
   };
   //Reading the localstorage data using getItem
 useEffect(()=>{
@@ -42,10 +47,29 @@ if(currentData!==null){
 useEffect(()=>{
     localStorage.setItem("list",JSON.stringify(list))
 },[list])
+
+//Save or update button handler
+const updateHandler=(data)=>{
+let currentEditData = [...list]
+let indItem = currentEditData[editItem]
+let finalData = {...indItem, text : data.text}
+// let finalData = {...data,isCompleted : currentEditData[editItem].isCompleted}
+currentEditData[editItem]= finalData
+setList(currentEditData)
+setIsEditing(false)
+reset()
+}
+const completeHandler=(index)=>{
+let currentData = [...list]
+console.log(currentData[index])
+currentData[index].isCompleted =  !currentData[index].isCompleted
+setList(currentData)
+
+}
   
   return (
     <div className="formData">
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={isEditing?handleSubmit(updateHandler):handleSubmit(onSubmit)}>
         <input
           className="inputField"
           type="text"
@@ -53,14 +77,17 @@ useEffect(()=>{
           required
           {...register("text")}
         />
-        <input type="submit" className="button" value={"Add"} />
+        <input type="submit" className="button" value={isEditing?"Update":"Add"} />
       </form>
       <br />
       {/* diplay area for input data */}
       <div className="inputData">
+            
+            
         {list.map((data, index) => {
           return (
             <div key={index}>
+            <input type="checkbox" checked={data.isCompleted}  onClick={()=>completeHandler(index)}/>
               {data.text}
               <button className="delete" onClick={() => deleteHandle(index)}>
                 {" "}
@@ -73,6 +100,8 @@ useEffect(()=>{
             </div>
           );
         })}
+       
+    
       </div>
     </div>
   );
